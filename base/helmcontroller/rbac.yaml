@@ -1,0 +1,27 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: helm-controller-role
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: helm-controller-role
+subjects:
+- kind: ServiceAccount
+  name: helm-controller-svc
+  namespace: helm-controller
+roleRef:
+  kind: ClusterRole
+  name: helm-controller-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: helm-controller-svc
+  namespace: helm-controller
