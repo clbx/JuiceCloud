@@ -3,5 +3,6 @@
 Services that most other deployed services rely on
 
 - [MetalLB](https://metallb.universe.tf) A bare metal load balancer
-- [HelmController](https://github.com/k3s-io/helm-controller) Helm chart manager using CRDs 
-- [Traefik](https://traefik.io) Multi-purpose proxy, used as an Ingress Controller
+- [NGINX Ingress Controller](https://kubernetes.github.io/ingress-nginx/) An ingress controller based on NGINX.
+- [Longhorn](https://longhorn.io) Distributed Storage System
+- [cert-manager](https://cert-manager.io) Automatic SSL Certificate distribution and renewal. 

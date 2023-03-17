@@ -153,9 +153,17 @@ kubeadm init phase upload-certs --upload-certs
 
 This will upload all of the certs required and delete them in 2 hours. The output of that command will give you a certificate key. add the ``--certificate-key`` argument of the ``kubeadm join`` command to automatically download the certs.
 
+
+If you missed the command you can print it out again with 
+```
+kubeadm token create --print-join-command
+```
+
 ```
 kubeadm join <control node>:6443 --token <token>  --discovery-token-ca-cert-hash <ca-cert hash> --certificate-key <certificate key> (--control-plane)
 ```
+
+
 
 # Additional Notes
 
@@ -172,7 +180,14 @@ brctl delbr cni0
 
 CoreDNS might throw a fit, but just restart it.
 
+## CNI says not initalized, cant find /etc/cni/net.d/
 
+If kubeadm is reset, and then re-installed, CRI-O might not pick up the cni since it already exists. To fix this you just need to touch a file in the directory so it looks at it and finds the CNI files. 
+
+```
+touch /etc/cni/net.d/99-dummy.conf
+```
+[CRI-O #4276](https://github.com/cri-o/cri-o/issues/4276)
 
 # All Done!
 

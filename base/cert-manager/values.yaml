@@ -1,0 +1,5 @@
+installCRDs: true
+featureGates: "AdditionalCertificateOutputFormats=true"
+webhook:
+  extraArgs:
+  - "--feature-gates=AdditionalCertificateOutputFormats=true"
