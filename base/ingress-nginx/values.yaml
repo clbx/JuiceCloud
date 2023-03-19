@@ -1,3 +1,7 @@
 controller:
+  config:
+    enable-real-ip: true
+    forwarded-for-header: proxy_protocol
   service:
+    externalTrafficPolicy: Local
     loadBalancerIP: 192.168.3.200

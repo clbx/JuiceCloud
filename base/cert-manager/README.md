@@ -12,5 +12,5 @@ helm install \
   --namespace cert-manager \
   --create-namespace \
   --version v1.11.0 \
-  --values vaules.yaml
+  --values values.yaml
 ```
