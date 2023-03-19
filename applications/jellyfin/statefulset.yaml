@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: jellyfin
+  namespace: media
+spec:
+  serviceName: "jellyfin"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      containers:
+      - name: jellyfin
+        image: jellyfin/jellyfin
+        ports:
+        - name: jellyfin-http
+          containerPort: 8096
+          protocol: TCP
+        volumeMounts:
+        - name: jellyfin-data
+          mountPath: /config
+        - name: media
+          mountPath: /mnt/media
+      volumes:
+      - name: media
+        nfs:
+          server: warehouse.juicecloud.org
+          path: /mnt/storage/media
+  volumeClaimTemplates:
+  - metadata:
+      name: jellyfin-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 32Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin
+  namespace: media
+  labels:
+    app: jellyfin
+spec:
+  selector:
+    app: jellyfin
+  ports:
+  - port: 8096
+    name: jellyfin
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jellyfin
+  namespace: media
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - jellyfin.services.juicecloud.org
+    secretName: jellyfin-cert
+  rules:
+  - host: jellyfin.services.juicecloud.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: jellyfin
+            port:
+              number: 8096

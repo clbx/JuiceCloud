@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rescue
+  namespace: media
+  labels:
+    app: rescue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rescue
+  template:
+    metadata:
+      labels:
+        app: rescue
+    spec:
+      containers:
+      - name: rescue
+        image: raesene/alpine-containertools
+        volumeMounts:
+        - name: jellyfin
+          mountPath: /config
+        imagePullPolicy: Always
+      volumes:
+      - name: jellyfin
+        persistentVolumeClaim:
+          claimName: jellyfin-data-jellyfin-0

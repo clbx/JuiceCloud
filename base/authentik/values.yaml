@@ -1,0 +1,33 @@
+authentik:
+  error_reporting:
+    enabled: true
+  log_level: trace
+ingress:
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    kubernetes.io/ingress.class: nginx
+  enabled: true
+  hosts:
+  - host: auth.services.juicecloud.org
+    paths:
+    - path: /
+      pathType: Prefix
+  tls:
+  - hosts:
+    - auth.services.juicecloud.org
+    secretName: authentik-cert
+postgresql:
+  enabled: true
+  existingSecret: authentik-secrets
+redis:
+  enabled: true
+
+envValueFrom:
+  AUTHENTIK_SECRET_KEY:
+    secretKeyRef:
+      name: authentik-secrets
+      key: secret_key
+  AUTHENTIK_POSTGRESQL__PASSWORD:
+    secretKeyRef:
+      name: authentik-secrets
+      key: postgresql-postgres-password
