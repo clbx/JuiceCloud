@@ -178,7 +178,9 @@ ifconfig cni0 down
 brctl delbr cni0
 ```
 
-CoreDNS might throw a fit, but just restart it.
+CoreDNS might throw a fit, but just restart it. 
+
+I had to do this on every control node or Flannel would shit its pants if the install node went offline
 
 ## CNI says not initalized, cant find /etc/cni/net.d/
 

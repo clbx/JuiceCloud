@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: juicebot
+  namespace: applications
+  labels:
+    app: juicebot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: juicebot
+  template:
+    metadata:
+      labels:
+        app: juicebot
+    spec:
+      containers:
+      - name: juicebot
+        image: clbx/juicebot:latest
+        imagePullPolicy: Always
+        env:
+        - name: TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: juicebot
+              key: token
+---
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: juicebot
+  namespace: applications
+spec:
+  refreshInterval: "15s"
+  secretStoreRef:
+    name: vault-backend
+    kind: ClusterSecretStore
+  target:
+    name: juicebot
+  data:
+  - secretKey: token
+    remoteRef:
+      key: kube/discord
+      property: bot-token

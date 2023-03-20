@@ -17,6 +17,9 @@ spec:
       containers:
       - name: jellyfin
         image: jellyfin/jellyfin
+        resources:
+          limits:
+            gpu.intel.com/i915: 1
         ports:
         - name: jellyfin-http
           containerPort: 8096
