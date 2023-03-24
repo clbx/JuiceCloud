@@ -6,10 +6,10 @@ One day I'll automate this
 
 These steps are run on a fresh install of Debian 11. Steps are run as root. 
 
-Install some useful tools
+Install some useful tools + longhorn dependencies.
 ```
 apt update
-apt install -y vim net-tools bridge-utils
+apt install -y vim net-tools bridge-utils open-iscsi nfs-common
 ```
 
 Add ``/sbin`` to path 
@@ -22,10 +22,6 @@ export PATH="/sbin:$PATH"
 source ~/.bashrc
 ```
 
-Install longhorn dependencies, not needed unless you plan on running longhorn
-```
-apt install -y open-iscsi nfs-common
-```
 
 Disable Swap
 ```bash
@@ -59,6 +55,7 @@ EOF
 ```
 sysctl --system
 ```
+
 
 # 2. Install kube*
 Install ``kubelet``,``kubeadm``, and ``kubectl``
@@ -114,27 +111,55 @@ systemctl daemon-reload
 systemctl enable crio --now
 ```
 
-# 4. Initialize Cluster
+# 4. Create HAProxy and keepalived configuration
+
+Install packages:
 ```
-kubeadm init --control-plane-endpoint=<node ip>  --pod-network-cidr=10.0.0.0/16 
+apt-get install -y keepalived haproxy
+```
+
+**keepalived**
+
+Using `keepalived.conf` create a file at `/etc/keepalived/keepalived.conf` replace the following values
+- `STATE`: MASTER or BACKUP
+- `INTERFACE`: The interface being used, probably eth0
+- `PRIORITY`: Higher Number = Higher Priority, 101 for control plane & 100 for worker
+- `AUTH_PASS`: same as all of the others
+
+**HAProxy**
+
+Using `haproxy.cfg` create a file at `/etc/haproxy/haproxy.cfg` add the servers to the end of the file 
+
+**Start Services**
+
+```
+systemctl enable haproxy --now
+systemctl enable keepalived --now
+```
+
+# 5. Initialize Cluster
+```
+kubeadm init --control-plane-endpoint=kubernetes.juicecloud.org:6443  --pod-network-cidr=10.0.0.0/16 
 ```
 
 Once finished a message will print out with join instructions for additional nodes and how to copy the kubeconfig. Take note of the join instruction for additonal nodes.
 
-# 5. Install Flannel
-You can choose any CNI Plugin, I chose flannel for no particular reason.
+# 5. Install Calico
+You can choose any CNI Plugin, Calico seemed like it was the simplest to deal with and also had capability for BGP memes.
 
+Install the operator:
 ```
-wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-```
-
-Edit ``kube-flannel.yaml`` and change the Network value of the ConfigMap to match the pod-network-cidr
-
-```
-kubectl apply -f kube-flannel.yaml
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/tigera-operator.yaml
 ```
 
-# 6. (Optional) Remove the control-plane taint. 
+Edit `calico.yaml` to use the appropriate encapsulation and CIDR of your cluster
+
+Apply the Calico resources:
+```
+kubectl apply -f calico.yaml
+```
+
+# 6. Remove the control-plane taint. 
 By default no pods are scheduled to the control nodes. This is technically the proper way to do it, but in a homelab it's probably more beneifical to allow scheduling to control nodes since your cluster is not going to be doing nearly as much as a in-use production cluster and I don't have the hardware/desire to pay for the power for machines that arn't doing much work. 
 
 You do need to be careful to not overwork your cluster though or bad things will happen.
@@ -164,33 +189,10 @@ kubeadm join <control node>:6443 --token <token>  --discovery-token-ca-cert-hash
 ```
 
 
-
-# Additional Notes
-
-## Error Adding Pod to the CNI Network
-
-On some cluster instantiations I had issue starting pods due to the cni bridge having an ip that was not in the pod CIDR. 
-
-To do this, all I had to do was take down and delete the bridge, a new one is immediatley created with the correct IP
-
-```
-ifconfig cni0 down
-brctl delbr cni0
-```
-
-CoreDNS might throw a fit, but just restart it. 
-
-I had to do this on every control node or Flannel would shit its pants if the install node went offline
-
-## CNI says not initalized, cant find /etc/cni/net.d/
-
-If kubeadm is reset, and then re-installed, CRI-O might not pick up the cni since it already exists. To fix this you just need to touch a file in the directory so it looks at it and finds the CNI files. 
-
-```
-touch /etc/cni/net.d/99-dummy.conf
-```
-[CRI-O #4276](https://github.com/cri-o/cri-o/issues/4276)
-
 # All Done!
 
 All finished. If you're following along specifically for my cluster and setup, check out the ``/base`` directory since that holds a lot of the underlying services that I use to facilitate the applications you probably want to set up. 
+
+Things like:
+- A method for persistent storage `/base/longhorn`
+- A load balancer `/base/metallb` and ingress controller `/base/ingress-nginx`
