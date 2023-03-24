@@ -1,0 +1,1 @@
+applications/internal/** filter=git-crypt diff=git-crypt

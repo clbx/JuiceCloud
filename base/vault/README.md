@@ -6,5 +6,5 @@ helm repo update
 ```
 
 ```
-helm install vault hashicorp/vault --namespace vault --create-namespace
+helm upgrade --install vault hashicorp/vault --namespace vault --create-namespace
 ```

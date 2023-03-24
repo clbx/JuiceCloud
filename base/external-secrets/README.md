@@ -6,7 +6,7 @@ helm repo update
 ```
 
 ```
-helm install external-secrets \
+helm upgrade --install external-secrets \
    external-secrets/external-secrets \
     -n external-secrets \
     --create-namespace \
