@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tdarr
+  namespace: media
+  labels:
+    app: tdarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tdarr
+  template:
+    metadata:
+      labels:
+        app: tdarr
+    spec:
+      containers:
+      - name: tdarr
+        image: ghcr.io/haveagitgat/tdarr
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8266
+        volumeMounts:
+        - name: media
+          mountPath: /mnt/media
+      volumes:
+      - name: media
+        nfs:
+          server: warehouse.juicecloud.org
+          path: /mnt/storage/media

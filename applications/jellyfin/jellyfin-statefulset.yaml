@@ -39,6 +39,7 @@ spec:
       name: jellyfin-data
     spec:
       accessModes: ["ReadWriteOnce"]
+      storageClassName: longhorn
       resources:
         requests:
           storage: 32Gi
