@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mealie
+  namespace: applications
+spec:
+  selector:
+    matchLabels:
+      app: mealie
+  serviceName: "mealie"
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: mealie
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: mealie
+        image: hkotel/mealie:latest
+        env:
+        - name: LDAP_AUTH_ENABLED
+          value: "True"
+        - name: LDAP_SERVER_URL
+          value: "ldap://ldap.juicecloud.org"
+        - name: LDAP_BIND_TEMPLATE
+          value: "cn={},ou=users,dc=juicecloud,dc=org"
+        ports:
+        - containerPort: 80
+          name: web
+        volumeMounts:
+        - name: mealie-data
+          mountPath: /app/data
+  volumeClaimTemplates:
+  - metadata:
+      name: mealie-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: "longhorn"
+      resources:
+        requests:
+          storage: 8Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mealie
+  namespace: applications
+  labels:
+    app: mealie
+spec:
+  ports:
+  - port: 80
+    name: web
+  selector:
+    app: mealie
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mealie-ingress
+  namespace: applications
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - recipes.services.juicecloud.org
+    secretName: recipies-cert
+  rules:
+  - host: recipes.services.juicecloud.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mealie
+            port:
+              number: 80

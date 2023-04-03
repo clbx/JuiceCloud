@@ -1,0 +1,127 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tdarr
+  namespace: media
+  labels:
+    app: tdarr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tdarr
+  template:
+    metadata:
+      labels:
+        app: tdarr
+    spec:
+      containers:
+      - name: tdarr
+        image: ghcr.io/haveagitgat/tdarr
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8266
+
+        volumeMounts:
+        - name:
+        - name: media
+          mountPath: /mnt/media
+      volumes:
+      - name: media
+        nfs:
+          server: warehouse.juicecloud.org
+          path: /mnt/storage/media
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: tdarr
+  namespace: media
+spec:
+  serviceName: "tdarr"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tdarr
+  template:
+    metadata:
+      labels:
+        app: tdarr
+    spec:
+      containers:
+      - name: tdarr
+        image: ghcr.io/haveagitgat/tdarr
+        resources:
+          limits:
+            gpu.intel.com/i915: 1
+        env:
+        - name: PGID
+          value: "26167"
+        ports:
+        - name: tdarr-web
+          containerPort: 8266
+        volumeMounts:
+        # - name: tdarr-data
+        #   mountPath: /config
+        - name: media
+          mountPath: /media
+      volumes:
+      - name: media
+        nfs:
+          server: warehouse.juicecloud.org
+          path: /mnt/storage/media
+          # volumeClaimTemplates:
+          # - metadata:
+          #     name: tdarr-data
+          #   spec:
+          #     accessModes: ["ReadWriteOnce"]
+          #     storageClassName: longhorn
+          #     resources:
+          #       requests:
+          #         storage: 32Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tdarr
+  namespace: media
+  labels:
+    app: tdarr
+spec:
+  selector:
+    app: tdarr
+  ports:
+  - name: tdarr-web
+    port: 8266
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tdarr
+  namespace: media
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/auth-url: |-
+      http://ak-outpost-authentik-embedded-outpost.auth.svc.cluster.local:9000/outpost.goauthentik.io/auth/nginx
+    nginx.ingress.kubernetes.io/auth-signin: |-
+      https://tdarr.services.juicecloud.org/outpost.goauthentik.io/start?rd=$escaped_request_uri
+    nginx.ingress.kubernetes.io/auth-response-headers: |-
+      Set-Cookie,X-authentik-username,X-authentik-groups,X-authentik-email,X-authentik-name,X-authentik-uid
+    nginx.ingress.kubernetes.io/auth-snippet: |
+      proxy_set_header X-Forwarded-Host $http_host;
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - tdarr.services.juicecloud.org
+    secretName: tdarr-cert
+  rules:
+  - host: tdarr.services.juicecloud.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tdarr
+            port:
+              number: 8266
