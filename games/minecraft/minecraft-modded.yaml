@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minecraft-modded
+  namespace: games
+spec:
+  serviceName: "minecraft-modded"
+  # Modded MC takes up a lot of resources at idle and is rarely used, so I only scale
+  # it up when there's interest in playing
+  replicas: 0
+  selector:
+    matchLabels:
+      app: minecraft-modded
+  template:
+    metadata:
+      labels:
+        app: minecraft-modded
+    spec:
+      containers:
+      - name: minecraft-modded
+        image: itzg/minecraft-server
+        resources:
+          limits:
+            memory: "10Gi"
+        ports:
+        - name: minecraft
+          containerPort: 25565
+          protocol: TCP
+          protocol: TCP
+        - name: rcon
+          containerPort: 25575
+          protocol: TCP
+        env:
+        - name: TYPE
+          value: AUTO_CURSEFORGE
+        - name: CF_SLUG
+          value: "all-of-fabric-5"
+        - name: EULA
+          value: 'TRUE'
+        - name: MEMORY
+          value: 8G
+        - name: OVERRIDE_SERVER_PROPERTIES
+          value: 'true'
+        - name: SEED
+          value: "MConK8S"
+        - name: VIEW_DISTANCE
+          value: "12"
+        - name: MOTD
+          value: '!!§4BETA§F!! §l§6Juice§cCloud§f Modded'
+        volumeMounts:
+        - name: minecraft-modded
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: minecraft-modded
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 32Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-modded
+  namespace: games
+  annotations:
+    "mc-router.itzg.me/externalServerName": "modded-mc.juicecloud.org"
+spec:
+  selector:
+    app: minecraft-modded
+  ports:
+  - name: minecraft-modded
+    protocol: TCP
+    port: 25565
+  - name: minecraft-modded-rcon
+    protocol: TCP
+    port: 25575

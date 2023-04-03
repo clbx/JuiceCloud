@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minecraft-router
+  namespace: games
+  labels:
+    app: minecraft-router
+spec:
+  selector:
+    matchLabels:
+      app: minecraft-router
+  template:
+    metadata:
+      labels:
+        app: minecraft-router
+    spec:
+      serviceAccountName: mc-router
+      containers:
+      - name: mc-router
+        image: itzg/mc-router:latest
+        args:
+        - '--api-binding'
+        - ':8080'
+        - '--in-kube-cluster'
+        ports:
+        - name: proxy
+          containerPort: 25565
+          protocol: TCP
+        - name: web
+          containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 250m
+            memory: 100Mi
+          requests:
+            cpu: 100m
+            memory: 50Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-router-api
+  namespace: games
+spec:
+  selector:
+    app: minecraft-router
+  ports:
+  - name: minecraft-router-api
+    protocol: TCP
+    port: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-router-game
+  namespace: games
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.3.202
+  selector:
+    app: minecraft-router
+  ports:
+  - name: minecraft-router-game
+    protocol: TCP
+    port: 25565
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mc-router
+  namespace: games
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: services-watcher
+rules:
+- apiGroups: [""]
+  resources: ["services"]
+  verbs: ["watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: mc-router-services-watcher
+subjects:
+- kind: ServiceAccount
+  name: mc-router
+  namespace: games
+roleRef:
+  kind: ClusterRole
+  name: services-watcher
+  apiGroup: rbac.authorization.k8s.io

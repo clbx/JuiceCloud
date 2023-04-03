@@ -13,3 +13,10 @@
 | 192.168.3.50 | `mercury.juicecloud.org` | Optiplex 7050 | Kubernetes Master Node |
 | 192.168.3.51 | `artemis.juicecloud.org` | Optiplex 3050 | Kubernetes Worker Node | 
 | 192.168.3.52 | `juptier.juicecloud.org` | DL380 G8 | Kubernetes Worker Node VM |
+
+## Load Balancers
+| IP | Hostname |Device | Notes |
+|----|----------|-------|-------|
+| 192.168.3.200 | `*.services.juicecloud.org` | NGINX Ingress | |
+| 192.168.3.201 | `ldap.juicecloud.org` | Authentik LDAP | |
+| 192.168.3.202 | `mc.juicecloud.org` `modded-mc.juicecloud.org` | Minecraft | Minecraft Router|

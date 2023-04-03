@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minecraft-vanilla
+  namespace: games
+spec:
+  serviceName: "minecraft-vanilla"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minecraft-vanilla
+  template:
+    metadata:
+      labels:
+        app: minecraft-vanilla
+    spec:
+      containers:
+      - name: minecraft-vanilla
+        image: itzg/minecraft-server
+        resources:
+          limits:
+            memory: "5Gi"
+        ports:
+        - name: minecraft
+          containerPort: 25565
+          protocol: TCP
+        - name: bedrock
+          containerPort: 19132
+          protocol: TCP
+        - name: rcon
+          containerPort: 25575
+          protocol: TCP
+        - name: dynmap
+          containerPort: 8123
+          protocol: TCP
+        env:
+        - name: TYPE
+          value: SPIGOT
+        - name: EULA
+          value: 'TRUE'
+        - name: MEMORY
+          value: 4G
+        - name: OVERRIDE_SERVER_PROPERTIES
+          value: 'true'
+        - name: EXEC_DIRECTLY
+          value: 'true'
+        - name: MOTD
+          value: §l§6Juice§cCloud§f Vanilla Minecraft Server
+        - name: VERSION
+          value: "1.19.4"
+        volumeMounts:
+        - name: minecraft-vanilla
+          mountPath: /data
+  volumeClaimTemplates:
+  - metadata:
+      name: minecraft-vanilla
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 32Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-vanilla
+  namespace: games
+  annotations:
+    "mc-router.itzg.me/externalServerName": "mc.juicecloud.org"
+spec:
+  selector:
+    app: minecraft-vanilla
+  ports:
+  - name: minecraft-vanilla-java
+    protocol: TCP
+    port: 25565
+  - name: minecraft-vanilla-rcon
+    protocol: TCP
+    port: 25575
+  - name: minecraft-vanilla-dynmap
+    protocol: TCP
+    port: 8123
