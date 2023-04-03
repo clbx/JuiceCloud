@@ -1,4 +1,4 @@
-# JuiceCloud
+![JuiceCloud](https://github.com/clbx/JuiceCloud/blob/main/branding/juicecloud.png?raw=true)
 
 A ~~bare metal k8s meme~~ kubernetes based homelab to demonstrate many commonly used homelab applications. 
 
