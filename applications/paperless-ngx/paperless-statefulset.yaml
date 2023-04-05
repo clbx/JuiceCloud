@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: paperless-ngx
+  namespace: applications
+spec:
+  serviceName: "paperless-ngx"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: paperless-ngx
+  template:
+    metadata:
+      labels:
+        app: paperless-ngx
+    spec:
+      containers:
+      - name: paperless-ngx
+        image: ghcr.io/paperless-ngx/paperless-ngx:latest
+        ports:
+        - name: paperless-web
+          containerPort: 8000
+          protocol: TCP
+        env:
+        - name: PAPERLESS_URL
+          value: "https://paperless.services.juicecloud.org"
+        volumeMounts:
+        - name: paperless-data
+          mountPath: /usr/src/paperless/data
+        - name: paperless-media
+          mountPath: /usr/src/paperless/media
+        - name: paperless-export
+          mountPath: /usr/src/paperless/export
+      - name: broker
+        image: docker.io/library/redis:7
+        ports:
+        - name: redis
+          containerPort: 6379
+      volumes:
+      - name: media
+        nfs:
+          server: warehouse.juicecloud.org
+          path: /mnt/storage/media
+  volumeClaimTemplates:
+  - metadata:
+      name: paperless-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 32Gi
+  - metadata:
+      name: paperless-media
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 32Gi
+  - metadata:
+      name: paperless-export
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: longhorn
+      resources:
+        requests:
+          storage: 32Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: paperless-ngx
+  namespace: applications
+  labels:
+    app: paperless-ngx
+spec:
+  selector:
+    app: paperless-ngx
+  ports:
+  - port: 8000
+    name: paperless-ngx-web
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: paperless-ngx
+  namespace: applications
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/whitelist-source-range: '192.168.0.0/22,10.0.0.0/8,127.0.0.1'
+    nginx.ingress.kubernetes.io/proxy-body-size: "10g"
+    nginx.org/client-max-body-size: "10g"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - paperless.services.juicecloud.org
+    secretName: paperless-cert
+  rules:
+  - host: paperless.services.juicecloud.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: paperless-ngx
+            port:
+              number: 8000

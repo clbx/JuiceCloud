@@ -1,10 +1,9 @@
-# Application 
 
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: rescue
-  namespace: auth
+  namespace: applications
   labels:
     app: rescue
 spec:
@@ -20,3 +19,24 @@ spec:
       containers:
       - name: rescue
         image: raesene/alpine-containertools
+        volumeMounts:
+        - name: paperless-data
+          mountPath: /usr/src/paperless/data
+        - name: paperless-media
+          mountPath: /usr/src/paperless/media
+        - name: paperless-export
+          mountPath: /usr/src/paperless/export
+        imagePullPolicy: Always
+      volumes:
+      - name: paperless-data
+        persistentVolumeClaim:
+          claimName: paperless-data-paperless-ngx-0
+      - name: paperless-media
+        persistentVolumeClaim:
+          claimName: paperless-media-paperless-ngx-0
+      - name: paperless-export
+        persistentVolumeClaim:
+          claimName: paperless-export-paperless-ngx-0
+
+
+
