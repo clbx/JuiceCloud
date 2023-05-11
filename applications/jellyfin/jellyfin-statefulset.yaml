@@ -14,6 +14,7 @@ spec:
       labels:
         app: jellyfin
     spec:
+      nodeName: artemis
       containers:
       - name: jellyfin
         image: jellyfin/jellyfin

@@ -13,6 +13,11 @@
 | 192.168.3.50 | `mercury.juicecloud.org` | Optiplex 7050 | Kubernetes Master Node |
 | 192.168.3.51 | `artemis.juicecloud.org` | Optiplex 3050 | Kubernetes Worker Node | 
 | 192.168.3.52 | `juptier.juicecloud.org` | DL380 G8 | Kubernetes Worker Node VM |
+| 192.168.3.53 | `ceres.juicecloud.org` | Beelink Mini S12 | Kubernetes Master Node |
+| 192.168.3.54 | `eros.juicecloud.org` | Beelink Mini S12 | Kubernetes Master Node |
+| 192.168.3.55 | `vesta.juicecloud.org` | Beelink Mini S12 | Kubernetes Master Node |
+| 192.168.3.56 | `pallas.juicecloud.org` | Bellink Mini S12 | Kubernetes Worker Node |
+| 192.168.3.57 | `saturn.juicecloud.org` | DL380 G8 | Kubernetes Worker Node VM |
 
 ## Load Balancers
 | IP | Hostname |Device | Notes |
