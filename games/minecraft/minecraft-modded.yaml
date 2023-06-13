@@ -7,7 +7,7 @@ spec:
   serviceName: "minecraft-modded"
   # Modded MC takes up a lot of resources at idle and is rarely used, so I only scale
   # it up when there's interest in playing
-  replicas: 0
+  replicas: 1
   selector:
     matchLabels:
       app: minecraft-modded
@@ -16,6 +16,7 @@ spec:
       labels:
         app: minecraft-modded
     spec:
+      nodeName: artemis
       containers:
       - name: minecraft-modded
         image: itzg/minecraft-server
@@ -32,9 +33,14 @@ spec:
           protocol: TCP
         env:
         - name: TYPE
-          value: AUTO_CURSEFORGE
+          value: "AUTO_CURSEFORGE"
         - name: CF_SLUG
-          value: "all-of-fabric-5"
+          value: "create-astral"
+        - name: CF_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: curseforge-api-key
+              key: apikey
         - name: EULA
           value: 'TRUE'
         - name: MEMORY
@@ -46,7 +52,7 @@ spec:
         - name: VIEW_DISTANCE
           value: "12"
         - name: MOTD
-          value: '!!§4BETA§F!! §l§6Juice§cCloud§f Modded'
+          value: '§l§6Juice§cCloud§f Create Astral'
         volumeMounts:
         - name: minecraft-modded
           mountPath: /data

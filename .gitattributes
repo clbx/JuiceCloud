@@ -1,1 +1,3 @@
 applications/internal/** filter=git-crypt diff=git-crypt
+talos/** filter=git-crypt diff=git-crypt
+internal/** filter=git-crypt diff=git-crypt
