@@ -1,23 +1,22 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: nginx-test
-  namespace: ingress-nginx
-spec:
-  selector:
-    matchLabels:
-      app: nginx-test
-  template:
-    metadata:
-      labels:
-        app: nginx-test
-    spec:
-      containers:
-      - name: httpd
-        image: httpd:2.4.53-alpine
-        ports:
-        - containerPort: 80
----
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: nginx-test
+#   namespace: ingress-nginx
+# spec:
+#   selector:
+#     matchLabels:
+#       app: nginx-test
+#   template:
+#     metadata:
+#       labels:
+#         app: nginx-test
+#     spec:
+#       containers:
+#       - name: httpd
+#         image: httpd:2.4.53-alpine
+#         ports:
+#         - containerPort: 80
 apiVersion: v1
 kind: Service
 metadata:
@@ -34,6 +33,12 @@ kind: Ingress
 metadata:
   name: nginx-test
   namespace: ingress-nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      if ($request_method = "GET") {
+        rewrite ^/$ https://test.new.juicecloud.org permanent;
+      }
 spec:
   ingressClassName: nginx
   rules:
